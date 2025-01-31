@@ -35,7 +35,7 @@ class User:
         return cls.obj
 
     def select(self):
-        self.cursor.execute('SELECT task, strftime("%d-%m-%Y", DATE(data_tame)), strftime("%H:%M", TIME(data_tame)) FROM Task ORDER BY data_tame')
+        self.cursor.execute('SELECT task, strftime("%d-%m-%Y", DATE(data_tame)), strftime("%H:%M", TIME(data_tame)), id FROM Task ORDER BY data_tame')
         self.tasks = self.cursor.fetchall()
         return self.tasks
 
@@ -47,10 +47,9 @@ class User:
 
 def delete_task():
     for selected_item in tree.selection():
-        item = tree.set(selected_item, '#1')
-        I.cursor.execute('DELETE FROM Task WHERE task=?', (item,))
-        row = tree.item(selected_item)
-        I.tasks.remove(tuple(row["values"]))
+        item = tree.set(selected_item, '#4')
+        I.cursor.execute('DELETE FROM Task WHERE id=?', (item,))
+        I.tasks = I.select()
     view_records()
     I.commit()
 
@@ -73,7 +72,7 @@ window = Tk()
 window.title("To Do List")
 window.geometry('600x400')
 
-columns = ("task", "data", "time")
+columns = ("task", "data", "time", "id")
 I.tasks = I.select()
 
 tree = ttk.Treeview(columns=columns, show="headings")
@@ -98,11 +97,12 @@ entryDate.grid(row=1, column=1)
 tree.heading("task", text="Задание")
 tree.heading("data", text="День")
 tree.heading("time", text="Время")
+tree.heading("id", text="id")
 
-#добавить ещё одну колонку с ID, чтобы при удалении не удалялись все одинаковые задачи
-tree.column("#1", stretch=True,  width=300)
-tree.column("#2", stretch=NO, width=70)
-tree.column("#3", stretch=NO, width=70)
+tree.column("#1", stretch=False, width=200)
+tree.column("#2", stretch=False, width=70)
+tree.column("#3", stretch=False, width=70)
+tree.column("#4", stretch=False, width=40)
 
 view_records()
 
