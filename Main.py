@@ -55,29 +55,29 @@ class Window:
 
     def interface(self):
         self.window.title("To Do List")
-        self.window.geometry('600x400')
+        self.window.geometry('600x350')
 
         columns = ("task", "data", "time", "id")
         self.I.select()
 
         self.tree = ttk.Treeview(columns=columns, show="headings")
-        self.tree.grid(row=3, column=0, sticky="nsew")
+        self.tree.place(x=10, y=100)
 
         self.btn = Button(self.window, text="Удалить", command=self.delete_task)
-        self.btn.grid(row=2, column=1)
+        self.btn.place(x=330, y=50)
 
         self.btn2 = Button(self.window, text="Добавить", command=self.add_task)
-        self.btn2.grid(row=2, column=0)
+        self.btn2.place(x=260, y=50)
 
         self.task_label = ttk.Label(self.window, text="Задание:")
         self.entryTask = ttk.Entry()
-        self.task_label.grid(row=0, column=0)
-        self.entryTask.grid(row=0, column=1)
+        self.task_label.place(x=10, y=5)
+        self.entryTask.place(x=260, y=5)
 
         self.date_label = ttk.Label(self.window, text="День и Время ('%d-%m-%Y %H:%M'):")
         self.entryDate = ttk.Entry()
-        self.date_label.grid(row=1, column=0)
-        self.entryDate.grid(row=1, column=1)
+        self.date_label.place(x=10, y=25)
+        self.entryDate.place(x=260, y=25)
 
         self.tree.heading("task", text="Задание")
         self.tree.heading("data", text="День")
@@ -93,7 +93,7 @@ class Window:
 
         self.scrollbar = ttk.Scrollbar(orient=VERTICAL, command=self.tree.yview)
         self.tree.configure(yscroll=self.scrollbar.set)
-        self.scrollbar.grid(row=3, column=1, sticky="ns")
+        self.scrollbar.place(x=400, y=100)
 
     def delete_task(self):
         for selected_item in self.tree.selection():
