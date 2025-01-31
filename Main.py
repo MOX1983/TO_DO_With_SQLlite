@@ -10,9 +10,6 @@ class Task:
         self.task = task
         self.date_time = date_time
 
-    def save_task(self):
-        I.cursor.execute('INSERT INTO Task (task, data_tame) VALUES (?, ?)',
-                       (self.task, self.date_time))
 
 class User:
     obj = None
@@ -34,10 +31,14 @@ class User:
             cls.obj = object.__new__(cls)
         return cls.obj
 
+    def save_task(self, obj_task):
+        self.cursor.execute('INSERT INTO Task (task, data_tame) VALUES (?, ?)',
+                            (obj_task.task, obj_task.date_time))
+
     def select(self):
-        self.cursor.execute('SELECT task, strftime("%d-%m-%Y", DATE(data_tame)), strftime("%H:%M", TIME(data_tame)), id FROM Task ORDER BY data_tame')
+        self.cursor.execute(
+            'SELECT task, strftime("%d-%m-%Y", DATE(data_tame)), strftime("%H:%M", TIME(data_tame)), id FROM Task ORDER BY data_tame')
         self.tasks = self.cursor.fetchall()
-        return self.tasks
 
     def commit(self):
         self.connection.commit()
@@ -45,70 +46,78 @@ class User:
     def close(self):
         self.connection.close()
 
-def delete_task():
-    for selected_item in tree.selection():
-        item = tree.set(selected_item, '#4')
-        I.cursor.execute('DELETE FROM Task WHERE id=?', (item,))
-        I.tasks = I.select()
-    view_records()
-    I.commit()
 
-def add_task():
-    new_task = Task(entryTask.get(), datetime.strptime(entryDate.get(), '%d-%m-%Y %H:%M'))
-    new_task.save_task()
-    I.commit()
-    I.tasks = I.select()
-    view_records()
+class Window:
+    def __init__(self, I, window):
+        self.I = I
+        self.window = window
+        self.interface()
 
-def view_records():
-    for i in tree.get_children():
-        tree.delete(i)
-    for task in I.tasks:
-        tree.insert("", END, values=task)
+    def interface(self):
+        self.window.title("To Do List")
+        self.window.geometry('600x400')
 
-I = User()
+        columns = ("task", "data", "time", "id")
+        self.I.select()
 
-window = Tk()
-window.title("To Do List")
-window.geometry('600x400')
+        self.tree = ttk.Treeview(columns=columns, show="headings")
+        self.tree.grid(row=3, column=0, sticky="nsew")
 
-columns = ("task", "data", "time", "id")
-I.tasks = I.select()
+        self.btn = Button(self.window, text="Удалить", command=self.delete_task)
+        self.btn.grid(row=2, column=1)
 
-tree = ttk.Treeview(columns=columns, show="headings")
-tree.grid(row=3, column=0, sticky="nsew")
+        self.btn2 = Button(self.window, text="Добавить", command=self.add_task)
+        self.btn2.grid(row=2, column=0)
 
-btn = Button(window, text="Удалить", command=delete_task)
-btn.grid(row=2,column=1)
+        self.task_label = ttk.Label(self.window, text="Задание:")
+        self.entryTask = ttk.Entry()
+        self.task_label.grid(row=0, column=0)
+        self.entryTask.grid(row=0, column=1)
 
-btn2 = Button(window, text="Добавить", command=add_task)
-btn2.grid(row=2,column=0)
+        self.date_label = ttk.Label(self.window, text="День и Время ('%d-%m-%Y %H:%M'):")
+        self.entryDate = ttk.Entry()
+        self.date_label.grid(row=1, column=0)
+        self.entryDate.grid(row=1, column=1)
 
-task_label = ttk.Label(window, text="Задание:")
-entryTask = ttk.Entry()
-task_label.grid(row=0, column=0)
-entryTask.grid(row=0, column=1)
+        self.tree.heading("task", text="Задание")
+        self.tree.heading("data", text="День")
+        self.tree.heading("time", text="Время")
+        self.tree.heading("id", text="id")
 
-date_label = ttk.Label(window, text="День и Время ('%d-%m-%Y %H:%M'):")
-entryDate = ttk.Entry()
-date_label.grid(row=1, column=0)
-entryDate.grid(row=1, column=1)
+        self.tree.column("#1", stretch=False, width=200)
+        self.tree.column("#2", stretch=False, width=70)
+        self.tree.column("#3", stretch=False, width=70)
+        self.tree.column("#4", stretch=False, width=40)
 
-tree.heading("task", text="Задание")
-tree.heading("data", text="День")
-tree.heading("time", text="Время")
-tree.heading("id", text="id")
+        self.view_records()
 
-tree.column("#1", stretch=False, width=200)
-tree.column("#2", stretch=False, width=70)
-tree.column("#3", stretch=False, width=70)
-tree.column("#4", stretch=False, width=40)
+        self.scrollbar = ttk.Scrollbar(orient=VERTICAL, command=self.tree.yview)
+        self.tree.configure(yscroll=self.scrollbar.set)
+        self.scrollbar.grid(row=3, column=1, sticky="ns")
 
-view_records()
+    def delete_task(self):
+        for selected_item in self.tree.selection():
+            item = self.tree.set(selected_item, '#4')
+            self.I.cursor.execute('DELETE FROM Task WHERE id=?', (item,))
+            self.I.select()
+        self.view_records()
+        self.I.commit()
 
-scrollbar = ttk.Scrollbar(orient=VERTICAL, command=tree.yview)
-tree.configure(yscroll=scrollbar.set)
-scrollbar.grid(row=3, column=1, sticky="ns")
+    def add_task(self):
+        new_task = Task(self.entryTask.get(), datetime.strptime(self.entryDate.get(), '%d-%m-%Y %H:%M'))
+        self.I.save_task(new_task)
+        self.I.commit()
+        self.I.select()
+        self.view_records()
 
-window.mainloop()
-I.close()
+    def view_records(self):
+        for i in self.tree.get_children():
+            self.tree.delete(i)
+        for task in self.I.tasks:
+            self.tree.insert("", END, values=task)
+
+
+user = User()
+app = Window(user, Tk())
+app.window.mainloop()
+user.close()
